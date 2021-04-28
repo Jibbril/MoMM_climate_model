@@ -1,0 +1,44 @@
+clc, clf, clear
+
+global CO2Emissions
+i = 1:5;
+A = [0.113 0.213 0.258 0.273 0.143];
+tau = [2 12.2 50.4 243.3 Inf];
+M_0 = 600;
+M_0s = [0 140 560 1680];
+len = length(CO2Emissions)
+
+Is = zeros([1 500])
+for j=1:length(M_0s)
+    for i = 1:length(Is)
+        Is(i) = I(i, A, tau);
+    end
+end
+plot(0:length(Is)-1, Is)
+
+
+%Ms = zeros([len 1]);
+%for i = 0:len-1
+%    Ms(i+1) = M(i, M_0, A, tau, CO2Emissions);
+%end
+%plot(0:len-1, Ms);
+
+function res = tau_i(tau_0)
+    k = 3.06*10^(-3);
+    U = 0;
+    for i 
+res = tau_0 * (1 + k *)
+end
+
+function res = I(t, A, tau)
+    res =  A(1)*exp(-t/tau(1)) + A(2)*exp(-t/tau(2)) + A(3)*exp(-t/tau(3)) + ...
+    A(4)*exp(-t/tau(4)) + A(5)*exp(-t/tau(5));
+end
+
+function res = M(t, M_0, A, tau, CO2Emissions)
+    sum = M_0;
+    for t_tilde=0:t
+        sum = sum + I(t-t_tilde, A, tau) * CO2Emissions(t_tilde + 1);
+    end
+    res = sum;
+end

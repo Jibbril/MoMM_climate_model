@@ -1,0 +1,30 @@
+i = 1:5;
+A = [0.113 0.213 0.258 0.273 0.143];
+tau = [2 12.2 50.4 243.3 Inf];
+M_0 = 600;
+M_0s = [0 140 560 1680];
+
+
+Is = zeros([1 500]);
+for i=1:length(M_0s)
+    for i = 1:length(Is)
+        Is(j) = I(j, A, tau);
+    end
+end
+
+plot(0:length(Is)-1, Is)
+
+
+function res = tau_i(tau_0)
+    k = 3.06*10^(-3);
+    res = tau_0 * (1 + k * 1680);
+end
+
+function res = I(t, A, tau)
+    sum = 0;
+    for i=1:5
+        sum = sum +  A(i)*exp(-t/tau_i(tau(i)));
+    end
+    
+    res =  sum;
+end
