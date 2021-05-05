@@ -41,16 +41,15 @@ for i = 1:T-1
     B(:,i+1) = B(:,i) + f(i,B(:,i));
 end
 
-figure(1)
+subplot(1,2,1)
 hold on
 plot(span,B(1,:));
 plot(span,B(2,:));
 plot(span,B(3,:));
+legend(["B1" "B2" "B3"])
 hold off
 
-legend(["B1" "B2" "B3"])
-
-figure(2)
+subplot(1,2,2)
 hold on
 plot(span, B(1,:) * conversion_factor);
 plot(span, CO2ConcRCP45)
