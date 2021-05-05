@@ -1,0 +1,107 @@
+clc,clf, clear
+
+global CO2Emissions CO2ConcRCP45
+
+beta = 0.35;
+len = 736;
+conversion_factor = 0.469;
+i = 1:5;
+A = [0.113 0.213 0.258 0.273 0.143];
+tau = [2 12.2 50.4 243.3 Inf];
+M_0 = 600;
+M_0s = [0 140 560 1680];
+len = length(CO2Emissions);
+
+
+BF = [600 600 1500];
+F = [
+    0 60 0;
+    15 0 45;
+    45 0 0
+];
+
+alpha = [
+    F(1,1)/BF(1) F(1,2)/BF(1) F(1,3)/BF(1);
+    F(2,1)/BF(2) F(2,2)/BF(2) F(2,3)/BF(2);
+    F(3,1)/BF(3) F(3,2)/BF(3) F(3,3)/BF(3);
+];
+
+
+
+U = @(t) CO2Emissions(t);
+
+f = @(t,B) [
+    alpha(3,1)*B(3) + alpha(2,1)*B(2) - NPP(B(1),beta,BF) + U(t); 
+    NPP(B(1),beta,BF) - alpha(2,3)*B(2) - alpha(2,1)*B(2); 
+    alpha(2,3)*B(2) - alpha(3,1)*B(3)
+];
+% Han tyckte att man skulle lösa det med tre ekvationer, inte skapa en 
+% fjärde box. Få till koppling mellan M och B. Tänk inte vattnet först
+% och sedan land, utan tänk att lösa systemet på land givet utsläpp, sen
+% tar havet upp lite. Upptag mellan natur och atmosfär går snabbare i 
+% verkligeheten än upptag mellan atmosfär och vatten. Man kanske kan göra
+% det i loopen? Typ lösa systemet för en viss iteration, sen dra av det som
+% ska till vattnet på rätt ställe? 
+
+
+B = zeros([3 len]);
+B(:,1) = BF;
+T = len;
+span = 1:len;
+
+for i = 1:T-1
+    B(:,i+1) = B(:,i) + f(i,B(:,i));
+    B(1,i+1) = M(i, M_0, A, tau, CO2Emissions,B(:,i), alpha,beta,BF);
+end
+
+B = B*conversion_factor;
+
+subplot(1,2,1)
+hold on
+plot(span,B(1,:));
+plot(span,B(2,:));
+plot(span,B(3,:));
+legend(["B1" "B2" "B3"])
+hold off
+
+subplot(1,2,2)
+hold on
+plot(span, B(1,:));
+plot(span, CO2ConcRCP45)
+legend(["Calculated" "From data"])
+hold off
+
+
+
+function res = NPP(B1,beta,BF)
+    NPP_0 = 60; 
+    res = NPP_0 * (1 + beta * log(B1/BF(1)));
+end
+
+% Funktioner från uppgift 4
+function res = tau_i(tau_0,t,CO2Emissions)
+    k = 3.06*10^(-3);
+    U = 0;
+    for i=0:t-1
+        U = U + CO2Emissions(i+1);
+    end
+res = tau_0 * (1 + k * U);
+end
+
+function res = I(t,t_tilde, A, tau, CO2Emissions)
+    sum = 0;
+    for i=1:5
+        sum = sum +  A(i)*exp(-t/tau_i(tau(i), t_tilde, CO2Emissions));
+    end
+    
+    res =  sum;
+end
+
+function res = M(t, M_0, A, tau, CO2Emissions,B,alpha,beta,BF)
+    sum = M_0;
+    for t_tilde=0:t
+        sum = sum + I(t-t_tilde,t, A, tau, CO2Emissions) * ...
+            (alpha(3,1)*B(3) + alpha(2,1)*B(2) - NPP(B(1),beta,BF) +CO2Emissions(t_tilde+1));
+    end
+    res = sum;
+end
