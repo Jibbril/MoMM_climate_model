@@ -3,9 +3,8 @@ clc,clf, clear
 global CO2Emissions CO2ConcRCP45
 
 beta = 0.35;
-len = 736;
+NPP_0 = 60;
 conversion_factor = 0.469;
-i = 1:5;
 A = [0.113 0.213 0.258 0.273 0.143];
 tau = [2 12.2 50.4 243.3 Inf];
 M_0 = 600;
@@ -31,9 +30,9 @@ alpha = [
 U = @(t) CO2Emissions(t);
 
 f = @(t,B) [
-    alpha(3,1)*B(3) + alpha(2,1)*B(2) - NPP(B(1),beta,BF) + U(t); 
-    NPP(B(1),beta,BF) - alpha(2,3)*B(2) - alpha(2,1)*B(2); 
-    alpha(2,3)*B(2) - alpha(3,1)*B(3)
+    I(1,t, A, tau, CO2Emissions, alpha, B, beta)*(alpha(3,1)*B(3,t) + alpha(2,1)*B(2,t) - NPP(B(1,t), beta) + U(t)); 
+    NPP(B(1,t), beta) - alpha(2,3)*B(2,t) - alpha(2,1)*B(2,t); 
+    alpha(2,3)*B(2,t) - alpha(3,1)*B(3,t)
 ];
 % Han tyckte att man skulle lösa det med tre ekvationer, inte skapa en 
 % fjärde box. Få till koppling mellan M och B. Tänk inte vattnet först
@@ -43,20 +42,23 @@ f = @(t,B) [
 % det i loopen? Typ lösa systemet för en viss iteration, sen dra av det som
 % ska till vattnet på rätt ställe? 
 
+% Förmodligen rätt nu, men glömde ändra utsläppen i Tau funktionen också!
+% Har åtgärdat en del men blir fortfarande inte bra. Debugga processen, kan
+% vara något indexfel i tau funktionen. Annars finns den fungerande koden i
+% föregående commit. 
+
 
 B = zeros([3 len]);
 B(:,1) = BF;
-T = len;
 span = 1:len;
 
-for i = 1:T-1
-    B(:,i+1) = B(:,i) + f(i,B(:,i));
-    B(1,i+1) = M(i, M_0, A, tau, CO2Emissions,B(:,i), alpha,beta,BF);
+for i = 1:len-1
+    B(:,i+1) = B(:,i) + f(i,B);
 end
 
-B = B*conversion_factor;
 
 subplot(1,2,1)
+axis([0 800 600 2200])
 hold on
 plot(span,B(1,:));
 plot(span,B(2,:));
@@ -66,42 +68,45 @@ hold off
 
 subplot(1,2,2)
 hold on
-plot(span, B(1,:));
+plot(span, B(1,:) * conversion_factor);
 plot(span, CO2ConcRCP45)
 legend(["Calculated" "From data"])
 hold off
 
 
-
-function res = NPP(B1,beta,BF)
-    NPP_0 = 60; 
-    res = NPP_0 * (1 + beta * log(B1/BF(1)));
+function res = NPP(B1, beta)
+    NPP_0 = 60;
+    BF = 600;
+    res = NPP_0 * (1 + beta * log(B1/BF));
 end
 
+
 % Funktioner från uppgift 4
-function res = tau_i(tau_0,t,CO2Emissions)
+function res = tau_i(tau_0,t,CO2Emissions, alpha, B, beta)
     k = 3.06*10^(-3);
     U = 0;
     for i=0:t-1
-        U = U + CO2Emissions(i+1);
+        U = U + (alpha(3,1)*B(3,i+1) + alpha(2,1)*B(2,i+1) - NPP(B(1,i+1), beta) + CO2Emissions(i+1));
+        %U = U + CO2Emissions(i+1);
     end
 res = tau_0 * (1 + k * U);
 end
 
-function res = I(t,t_tilde, A, tau, CO2Emissions)
+function res = I(t,t_tilde, A, tau, CO2Emissions, alpha, B, beta)
     sum = 0;
     for i=1:5
-        sum = sum +  A(i)*exp(-t/tau_i(tau(i), t_tilde, CO2Emissions));
+        sum = sum +  A(i)*exp(-t/tau_i(tau(i), t_tilde, CO2Emissions, alpha, B, beta));
     end
     
     res =  sum;
 end
 
-function res = M(t, M_0, A, tau, CO2Emissions,B,alpha,beta,BF)
+% Funktionen nedan är inte längre relevant utifrån ändringar som gjorts
+% ovan. Ska den användas måste den formateras om och ges fler argument.
+function res = M(t, M_0, A, tau, CO2Emissions)
     sum = M_0;
     for t_tilde=0:t
-        sum = sum + I(t-t_tilde,t, A, tau, CO2Emissions) * ...
-            (alpha(3,1)*B(3) + alpha(2,1)*B(2) - NPP(B(1),beta,BF) +CO2Emissions(t_tilde+1));
+        sum = sum + I(t-t_tilde,t, A, tau, CO2Emissions) * CO2Emissions(t_tilde + 1);
     end
     res = sum;
 end
