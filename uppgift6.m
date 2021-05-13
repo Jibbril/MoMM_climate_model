@@ -2,7 +2,7 @@ clc,clf, clear
 
 global CO2Emissions CO2ConcRCP45
 
-beta = 0.35;
+beta = 0.29;
 NPP_0 = 60;
 conversion_factor = 0.469;
 A = [0.113 0.213 0.258 0.273 0.143];
@@ -66,14 +66,14 @@ hold on
 plot(span,B(1,:));
 plot(span,B(2,:));
 plot(span,B(3,:));
-legend(["B1" "B2" "B3"])
+legend(["B1" "B2" "B3"], "Location", "NorthWest")
 hold off
 
 subplot(1,2,2)
 hold on
 plot(span, B(1,:) * conversion_factor);
 plot(span, CO2ConcRCP45)
-legend(["Calculated" "From data"])
+legend(["Calculated" "From data"], "Location", "NorthWest")
 hold off
 
 

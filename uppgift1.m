@@ -3,7 +3,7 @@ clc,clf, clear
 global CO2Emissions CO2ConcRCP45
 
 beta = 0.35;
-NPP_0 = 60; % Fråga om denna!
+NPP_0 = 60; 
 len = 736;
 conversion_factor = 0.469;
 

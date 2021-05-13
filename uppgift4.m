@@ -1,6 +1,6 @@
 clc, clf, clear
 
-global CO2Emissions
+global CO2Emissions CO2ConcRCP45
 
 i = 1:5;
 A = [0.113 0.213 0.258 0.273 0.143];
@@ -11,24 +11,16 @@ len = length(CO2Emissions);
 conversion_factor = 0.469;
 
 
-
-% Plotten är fel. Dels ska vi plotta concentrationen, inte
-% koldioxidstocken. Utöver det ska kurvan inte gå upp igen efter att den
-% peakat, ska liksom långsamt klinga av. Förmodligen något fel med indexen
-% som matas in i funktionerna. Kolla specifikt på om det verkligen är
-% tau(i) som ska matas in från I funktionen till tau_i funktionen.
 Ms = zeros([len 1]);
 for i = 0:len-1
     Ms(i+1) = M(i, M_0, A, tau, CO2Emissions);
 end
 
+hold on
 plot(0:len-1, Ms*conversion_factor);
+plot(0:len-1, CO2ConcRCP45)
+legend(["Calculated"  "From data"])
 
-%Is = zeros([1 500]);
-%for i = 1:length(Is)
-%    Is(i) = I(i, A, tau, CO2Emissions);
-%end
-%plot(0:length(Is)-1, Is)
 
 function res = tau_i(tau_0,t,CO2Emissions)
     k = 3.06*10^(-3);
