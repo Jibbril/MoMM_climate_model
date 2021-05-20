@@ -3,23 +3,28 @@ global TAnomali
 
 % Geoengineering added in the method run_scenario()
 
+
 TMax = 436;
 T = min(TMax,TMax);
 nasa_data_start = 115;
 conversion_factor = 0.469;
-lambda = 0.8; % 0.5-1.3 K/Wm^2
-k = 0.5; % 0.2-1 W/Km^2
+lambda = 1.3; % 0.5-1.3 K/Wm^2
+k = 0.8; % 0.2-1 W/Km^2
 s = 1;
+reference_period = [85 135]; %1850-1900
 
 CO2_scenario_iii = create_co2_scenario_iii();
 
-delta_T3 = run_scenario(TMax, CO2_scenario_iii,lambda,k,s);
+delta_T3 = run_scenario(TMax, CO2_scenario_iii,lambda,k,s,reference_period, true);
+delta_T4 = run_scenario(TMax, CO2_scenario_iii,lambda,k,s,reference_period, false);
 
 hold on
 plot(1:T,delta_T3(1:T))
+plot(1:T,delta_T4(1:T))
 plot(nasa_data_start:nasa_data_start+length(TAnomali)-1,TAnomali)
+grid on
 
-legend(["Scenario iii" "Nasa data"], "Location", "NorthWest")
+legend(["Scenario iii with geo" "Scenario iii without geo" "Nasa data"], "Location", "NorthWest")
 
 end_val_iii = delta_T3(end);
 
@@ -42,18 +47,18 @@ function plot_scenarios()
     legend(["Scenario i" "Scenario ii" "Scenario iii"], "Location", "NorthWest")
 end
 
-function res = run_scenario(TMax, CO2_scenario,lambda,k,s)
+function res = run_scenario(TMax, CO2_scenario,lambda,k,s, reference_period,use_geo)
     BF = [600 600 1500];
     %TStart = min(length(TAnomali), max(nasa_data_start, 500));
-    reference_period = [186 215];
 
     co2 = co2_model(BF, CO2_scenario);
     RF = calculate_RF(co2(1,:),BF(1));
     RF = add_aerosol_and_other_RF(RF,s);
     
-    % Decrease radiative forcing due to geoengineering
-    RF(285:335) = RF(285:335) - 4;
-    
+    if (use_geo)
+        % Decrease radiative forcing due to geoengineering
+        RF(285:335) = RF(285:335) - 4;
+    end
     delta_T = heat_model(RF,TMax,lambda,k);
 
     avg = mean(delta_T(reference_period(1):reference_period(2)));
@@ -189,7 +194,7 @@ function res = create_co2_scenario_iii()
     end_index = start_index + 79;
     start_val = CO2Emissions(start_index);
 
-    linear_increase = @(t) start_val *(1  + 0.5*(t-start_index)/79);
+    linear_increase = @(t) start_val *(1  + 1.5*(t-start_index)/79);
 
     for i = start_index:end_index
         CO2(i) = linear_increase(i);

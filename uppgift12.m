@@ -6,6 +6,8 @@ plot_scenarios();
 clc, clf, clear
 global TAnomali
 
+% Ska utgå ifrån förindustriell tid, resonera kring lämligt val av
+
 TMax = 436;
 T = min(TMax,TMax);
 nasa_data_start = 115;
@@ -13,14 +15,15 @@ conversion_factor = 0.469;
 lambda = 0.8; % 0.5-1.3 K/Wm^2
 k = 0.5; % 0.2-1 W/Km^2
 s = 1;
+reference_period = [85 135]; %1850-1900
 
 CO2_scenario_i = create_co2_scenario_i();
 CO2_scenario_ii = create_co2_scenario_ii();
 CO2_scenario_iii = create_co2_scenario_iii();
 
-delta_T1 = run_scenario(TMax, CO2_scenario_i,lambda,k,s);
-delta_T2 = run_scenario(TMax, CO2_scenario_ii,lambda,k,s);
-delta_T3 = run_scenario(TMax, CO2_scenario_iii,lambda,k,s);
+delta_T1 = run_scenario(TMax, CO2_scenario_i,lambda,k,s,reference_period);
+delta_T2 = run_scenario(TMax, CO2_scenario_ii,lambda,k,s,reference_period);
+delta_T3 = run_scenario(TMax, CO2_scenario_iii,lambda,k,s,reference_period);
 
 hold on
 plot(1:T,delta_T1(1:T))
@@ -42,14 +45,15 @@ conversion_factor = 0.469;
 lambda = 0.8; % 0.5-1.3 K/Wm^2
 k = 0.5; % 0.2-1 W/Km^2
 s = 1;
+reference_period = [85 135]; %1850-1900
 
 CO2_scenario_i = create_co2_scenario_i();
 CO2_scenario_ii = create_co2_scenario_ii();
 CO2_scenario_iii = create_co2_scenario_iii();
 
-delta_T1 = run_scenario(TMax, CO2_scenario_i,lambda,k,s);
-delta_T2 = run_scenario(TMax, CO2_scenario_ii,lambda,k,s);
-delta_T3 = run_scenario(TMax, CO2_scenario_iii,lambda,k,s);
+delta_T1 = run_scenario(TMax, CO2_scenario_i,lambda,k,s,reference_period);
+delta_T2 = run_scenario(TMax, CO2_scenario_ii,lambda,k,s,reference_period);
+delta_T3 = run_scenario(TMax, CO2_scenario_iii,lambda,k,s,reference_period);
 
 hold on
 axis([0 350 -1.5 4])
@@ -86,10 +90,9 @@ function plot_scenarios()
     legend(["Scenario i" "Scenario ii" "Scenario iii"], "Location", "NorthWest")
 end
 
-function res = run_scenario(TMax, CO2_scenario,lambda,k,s)
+function res = run_scenario(TMax, CO2_scenario,lambda,k,s, reference_period)
     BF = [600 600 1500];
     %TStart = min(length(TAnomali), max(nasa_data_start, 500));
-    reference_period = [186 215];
 
     co2 = co2_model(BF, CO2_scenario);
     RF = calculate_RF(co2(1,:),BF(1));
@@ -228,8 +231,10 @@ function res = create_co2_scenario_iii()
     start_index = 256;
     end_index = start_index + 79;
     start_val = CO2Emissions(start_index);
-
-    linear_increase = @(t) start_val *(1  + 0.5*(t-start_index)/79);
+    
+    % Ska vara gånger 2.5 inte 1.5
+    
+    linear_increase = @(t) start_val *(1  + 1.5*(t-start_index)/79);
 
     for i = start_index:end_index
         CO2(i) = linear_increase(i);
